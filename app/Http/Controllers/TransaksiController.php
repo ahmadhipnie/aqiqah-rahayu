@@ -12,6 +12,11 @@ use Midtrans\Snap;
 use Midtrans\Config;
 use Illuminate\Support\Str;
 
+use App\Mail\InvoiceTransaksiMail;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Carbon;
+
+
 class TransaksiController extends Controller
 {
     public function index(Request $request)
@@ -36,6 +41,35 @@ class TransaksiController extends Controller
         $to = $request->input('to');
 
         return Excel::download(new TransaksiExport($from, $to), 'transaksi.xlsx');
+    }
+
+
+    public function edit($id)
+    {
+        $transaksi = Transaksis::findOrFail($id);
+        $produks = Produks::all();
+        return view('admin.transaksi.transaksi_edit', compact('transaksi', 'produks'));
+    }
+
+    public function update(Request $request, $id)
+    {
+        $request->validate([
+            'produk_id' => 'required|exists:produks,id',
+            'jumlah_produk' => 'required|integer|min:1',
+            'total_harga' => 'required|integer|min:0',
+            'nama_pembeli' => 'required',
+            'no_telepon_pembeli' => 'required',
+            'no_wa_aktif' => 'required',
+            'alamat_pembeli' => 'required',
+            'email_pembeli' => 'required|email',
+            'tanggal_pengantaran' => 'required|date|after:today',
+            'status_transaksi' => 'required',
+        ]);
+
+        $transaksi = Transaksis::findOrFail($id);
+        $transaksi->update($request->all());
+
+        return redirect()->route('admin.transaksi')->with('success', 'Transaksi berhasil diupdate');
     }
 
 
@@ -65,6 +99,13 @@ class TransaksiController extends Controller
         $wa = $request->input('no_wa_aktif');
         $alamat = $request->input('alamat_pembeli');
         $email = $request->input('email_pembeli');
+        $tanggal_pengantaran = $request->input('tanggal_pengantaran');
+        if (!$tanggal_pengantaran || Carbon::parse($tanggal_pengantaran)->lte(Carbon::today())) {
+            return response()->json([
+                'error' => 'Tanggal pengantaran minimal H+1 dari hari ini.'
+            ], 422);
+        }
+
 
         // Siapkan item_details
         $items = [];
@@ -135,6 +176,17 @@ class TransaksiController extends Controller
         Log::info($produk_ids);
 
         foreach ($produk_ids as $produk_id) {
+
+            $produk = \App\Models\Produks::find($produk_id);
+            $jumlah = $form['jumlah_produk'][$produk_id] ?? 1;
+            $produkList[] = [
+                'nama_produk' => $produk->nama_produk,
+                'jumlah' => $jumlah,
+                'harga' => $produk->harga_produk,
+                'subtotal' => $produk->harga_produk * $jumlah,
+            ];
+
+
             \App\Models\Transaksis::create([
                 'produk_id' => $produk_id,
                 'jumlah_produk' => $form['jumlah_produk'][$produk_id] ?? 1,
@@ -144,9 +196,24 @@ class TransaksiController extends Controller
                 'no_wa_aktif' => $form['no_wa_aktif'],
                 'alamat_pembeli' => $form['alamat_pembeli'],
                 'email_pembeli' => $form['email_pembeli'],
+                'tanggal_pengantaran' => $form['tanggal_pengantaran'],
                 'status_transaksi' => 'diproses',
             ]);
         }
+
+        // Data invoice
+        $invoiceData = [
+            'nama_pembeli' => $form['nama_pembeli'],
+            'email_pembeli' => $form['email_pembeli'],
+            'no_telepon_pembeli' => $form['no_telepon_pembeli'],
+            'alamat_pembeli' => $form['alamat_pembeli'],
+            'total_harga' => $result['gross_amount'],
+            'tanggal_pengantaran' => $form['tanggal_pengantaran'], // pastikan ini ada
+        ];
+
+        // Kirim email invoice
+        Mail::to($form['email_pembeli'])->send(new InvoiceTransaksiMail($invoiceData, $produkList));
+
 
         return response()->json(['success' => true]);
     }

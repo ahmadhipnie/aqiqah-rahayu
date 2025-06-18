@@ -20,6 +20,7 @@ class Transaksis extends Model
         'no_wa_aktif',
         'alamat_pembeli',
         'email_pembeli',
+        'tanggal_pengantaran',
         'status_transaksi',
     ];
 

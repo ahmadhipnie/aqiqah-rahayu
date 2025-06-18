@@ -82,7 +82,8 @@ Route::delete('/admin/galeri/{id}', [GaleriController::class, 'destroy'])->name(
 //route transaksi admin
 Route::get('/admin/transaksi', [TransaksiController::class, 'index'])->name('admin.transaksi');
 Route::get('/admin/transaksi/export', [TransaksiController::class, 'export'])->name('admin.transaksi.export');
-
+Route::get('/admin/transaksi/{id}/edit', [TransaksiController::class, 'edit'])->name('admin.transaksi.edit');
+Route::post('/admin/transaksi/{id}/update', [TransaksiController::class, 'update'])->name('admin.transaksi.update');
 
 
 //route testimoni admin

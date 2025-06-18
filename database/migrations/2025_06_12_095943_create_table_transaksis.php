@@ -21,6 +21,7 @@ return new class extends Migration
             $table->string('no_telepon_pembeli');
             $table->string('no_wa_aktif');
             $table->text('alamat_pembeli');
+            $table->date('tanggal_pengantaran');
             $table->string('status_transaksi')->default('diproses'); // diproses, dikirim, selesai, dibatalkan
 
 

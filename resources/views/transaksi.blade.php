@@ -73,6 +73,10 @@
                     <label>Email Pembeli</label>
                     <input type="email" name="email_pembeli" class="form-control" required>
                 </div>
+                <div class="col-md-6 mb-3">
+                    <label>Tanggal Pengantaran</label>
+                    <input type="date" name="tanggal_pengantaran" class="form-control" id="tanggal_pengantaran" required>
+                </div>
             </div>
             <input type="hidden" name="total_harga" id="total_harga_input">
             <div class="mb-3">
@@ -113,6 +117,18 @@
                     updateTotal();
                 });
             });
+
+            // Set min tanggal_pengantaran = besok
+            let tglInput = document.getElementById('tanggal_pengantaran');
+            if (tglInput) {
+                let besok = new Date();
+                besok.setDate(besok.getDate() + 1);
+                let yyyy = besok.getFullYear();
+                let mm = String(besok.getMonth() + 1).padStart(2, '0');
+                let dd = String(besok.getDate()).padStart(2, '0');
+                let minDate = `${yyyy}-${mm}-${dd}`;
+                tglInput.setAttribute('min', minDate);
+            }
         });
     </script>
 
@@ -133,7 +149,10 @@
                     },
                     body: formData
                 })
-                .then(res => res.json())
+                .then(res => {
+                    if (!res.ok) return res.json().then(err => Promise.reject(err));
+                    return res.json();
+                })
                 .then(data => {
                     window.snap.pay(data.snap_token, {
                         onSuccess: function(result) {
@@ -175,6 +194,13 @@
                             alert('Kamu belum menyelesaikan pembayaran!');
                         }
                     });
+                })
+                .catch(err => {
+                    if (err.error) {
+                        alert(err.error);
+                    } else {
+                        alert('Terjadi kesalahan!');
+                    }
                 });
         };
     </script>
