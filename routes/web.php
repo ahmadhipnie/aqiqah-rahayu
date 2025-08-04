@@ -8,6 +8,7 @@ use App\Http\Controllers\LandingController;
 use App\Http\Controllers\ProdukController;
 use App\Http\Controllers\TestimoniController;
 use App\Http\Controllers\TransaksiController;
+use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -98,3 +99,10 @@ Route::delete('/admin/testimoni/{id}', [TestimoniController::class, 'destroy'])-
 Route::get('/transaksi', [TransaksiController::class, 'pergiKeTransaksiPelanggan'])->name('transaksi.pelanggan');
 Route::post('/transaksi/snap-token', [TransaksiController::class, 'getSnapToken'])->name('transaksi.snap_token');
 Route::post('/transaksi/snap-finish', [TransaksiController::class, 'snapFinish'])->name('transaksi.snap_finish');
+
+
+//route karyawan admin
+Route::get('/admin/karyawan', [UserController::class, 'index'])->name('admin.karyawan');
+Route::post('/admin/karyawan', [UserController::class, 'store'])->name('admin.karyawan.store');
+Route::post('/admin/karyawan/{id}/update', [UserController::class, 'update'])->name('admin.karyawan.update');
+Route::delete('/admin/karyawan/{id}', [UserController::class, 'destroy'])->name('admin.karyawan.destroy');
