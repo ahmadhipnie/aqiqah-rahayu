@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Transaksis;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
@@ -17,8 +18,10 @@ class AuthController extends Controller
 
     public function dashboard()
     {
-        
-        return view('admin.dashboard');
+        $transaksiCount = Transaksis::count();
+        $totalPendapatan = Transaksis::sum('total_harga');
+        $totalTransaksiHariIni = Transaksis::whereDate('created_at', today())->count();
+        return view('admin.dashboard', compact('transaksiCount', 'totalPendapatan', 'totalTransaksiHariIni'));
 
     }
 
